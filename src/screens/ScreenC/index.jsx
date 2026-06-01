@@ -129,7 +129,7 @@ export default function ScreenC() {
           <div style={{fontSize:22, letterSpacing:"0.2em", color:"#1a1a1a"}}>感謝你的參與</div>
           <div style={{fontSize:12, color:"rgba(0,0,0,0.4)", letterSpacing:"0.1em"}}>你的故事已被記錄</div>
           <div style={{marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10}}>
-            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=http://172.20.10.10:5173/stories`} alt="QR Code" style={{width:160, height:160}} />
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories`} alt="QR Code" style={{width:160, height:160}} />
             <div style={{fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.1em"}}>掃描查看創作者的故事版本</div>
           </div>
         </div>
