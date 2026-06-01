@@ -4,6 +4,7 @@ import ScreenB from "./screens/ScreenB";
 import ScreenC from "./screens/ScreenC";
 import Stories from "./screens/Stories";
 import Admin from "./screens/Admin";
+import Solo from "./screens/Solo";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/screen-c" element={<ScreenC />} />
         <Route path="/stories" element={<Stories />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/solo" element={<Solo />} />
         <Route path="*" element={<Navigate to="/screen-a" replace />} />
       </Routes>
     </BrowserRouter>
