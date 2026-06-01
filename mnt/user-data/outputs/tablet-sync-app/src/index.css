@@ -1,0 +1,37 @@
+/* 平板全螢幕鎖定，禁止捲動與文字選取 */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  background: #0c0c11;
+}
+
+/* 字型 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+/* 提示橫向使用（iOS Safari） */
+@media (orientation: portrait) {
+  body::after {
+    content: "請將裝置旋轉為橫向使用";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    background: #0c0c11;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.2rem;
+    font-family: 'Noto Sans TC', sans-serif;
+    z-index: 9999;
+  }
+}
