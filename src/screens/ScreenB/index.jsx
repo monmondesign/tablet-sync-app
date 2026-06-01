@@ -38,7 +38,7 @@ function generatePositions() {
 const SESSION_ID = "exhibition_01";
 
 export default function ScreenB() {
-  const [selectionA, setSelectionA] = useState(null);
+  const [selectionA, setSelectionAState] = useState(null);
   const [positions, setPositions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [sent, setSent] = useState(false);
@@ -47,7 +47,7 @@ export default function ScreenB() {
   useEffect(() => {
     setPositions(generatePositions());
     const unsub = listenSelectionA((data) => {
-      setSelectionA(data);
+      setSelectionAState(data);
     });
     return () => unsub();
   }, []);
@@ -91,9 +91,7 @@ export default function ScreenB() {
           <div style={styles.leftLabel}>第一個片段</div>
           <div style={styles.previewCard}>
             {selectionA ? (
-              <>
-                <img src={selectionA.src} alt="" style={styles.previewImg} />
-              </>
+              <img src={selectionA.src} alt="" style={styles.previewImg} />
             ) : (
               <div style={styles.waiting}>等待平板 1 選擇中...</div>
             )}
