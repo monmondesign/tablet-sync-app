@@ -1,0 +1,232 @@
+import { useState } from "react";
+import { ALL_IMAGES } from "../../data/images";
+import { getDatabase, ref, push } from "firebase/database";
+
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const SCALE_LABELS = ["非常不同意", "不同意", "尚可", "同意", "非常同意"];
+const SCALE_QUESTIONS = [
+  "在選圖過程中，我覺得這些圖沒有「標準答案」，我可以自由決定故事的走向。",
+  "我相信如果讓我的朋友來玩，他們拼湊出來的故事一定跟我的完全不一樣。",
+  "雖然沒有文字和固定順序，但我能在腦中將這三張圖串連成一個有邏輯的故事。",
+  "我所選擇的圖，觸發我聯想起過去真實的生活經驗或記憶。",
+];
+const MOOD_OPTIONS = ["溫暖", "孤獨", "奇幻", "日常", "緊張", "其他"];
+const AGE_OPTIONS = ["18歲以下", "19-24歲", "25-30歲", "31-40歲", "41歲以上"];
+
+export default function Solo() {
+  const [step, setStep] = useState(1);
+  const [allImages] = useState(() => shuffle(ALL_IMAGES));
+  const [sel1, setSel1] = useState(null);
+  const [sel2, setSel2] = useState(null);
+  const [sel3, setSel3] = useState(null);
+  const [scores, setScores] = useState([0, 0, 0, 0]);
+  const [story, setStory] = useState("");
+  const [reason, setReason] = useState("");
+  const [mood, setMood] = useState("");
+  const [age, setAge] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const images2 = allImages.filter(i => i.id !== sel1?.id);
+  const images3 = allImages.filter(i => i.id !== sel1?.id && i.id !== sel2?.id);
+
+  async function handleSubmit() {
+    if (!story || !reason || !mood || !age) { alert("請填寫所有必填欄位！"); return; }
+    if (scores.includes(0)) { alert("請完成所有量表題！"); return; }
+    setSubmitting(true);
+    try {
+      const db = getDatabase();
+      await push(ref(db, "surveys"), {
+        timestamp: Date.now(),
+        mode: "solo",
+        imageA: sel1?.id || null,
+        imageB: sel2?.id || null,
+        imageC: sel3?.id || null,
+        q1: scores[0], q2: scores[1], q3: scores[2], q4: scores[3],
+        story, reason, mood, age,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      alert("儲存失敗：" + err.message);
+    } finally { setSubmitting(false); }
+  }
+
+  const stepLabel = (n) => {
+    if (step > n) return styles.stepDone;
+    if (step === n) return styles.stepActive;
+    return {};
+  };
+
+  const TopBar = () => (
+    <div style={styles.topBar}>
+      <span style={styles.title}>屬於你的想像旅程</span>
+      <div style={styles.steps}>
+        <span style={{...styles.step, ...stepLabel(1)}}>① 第一張</span>
+        <span style={{...styles.step, ...stepLabel(2)}}>② 第二張</span>
+        <span style={{...styles.step, ...stepLabel(3)}}>③ 第三張</span>
+      </div>
+    </div>
+  );
+
+  if (submitted) return (
+    <div style={styles.wrapper}>
+      <TopBar />
+      <div style={styles.center}>
+        <div style={styles.bigText}>感謝你的參與</div>
+        <div style={styles.smallText}>你的故事已被記錄</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories" alt="QR" style={{width:140,height:140,margin:"16px 0"}} />
+        <div style={styles.smallText}>掃描查看創作者的故事版本</div>
+        <button onClick={() => window.location.reload()} style={{...styles.btn, marginTop:16}}>↺ 再玩一次</button>
+      </div>
+    </div>
+  );
+
+  if (step === 4) return (
+    <div style={styles.wrapper}>
+      <TopBar />
+      <div style={styles.surveyScroll}>
+        <div style={styles.previewRow}>
+          {[sel1, sel2, sel3].map((sel, i) => sel && (
+            <div key={i} style={styles.previewThumb}>
+              <img src={sel.src} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} />
+              <div style={styles.thumbBadge}>{i+1}</div>
+            </div>
+          ))}
+        </div>
+        <div style={styles.surveySectionTitle}>請依真實感受點選 1～5</div>
+        {SCALE_QUESTIONS.map((q, qi) => (
+          <div key={qi} style={styles.scaleRow}>
+            <div style={styles.scaleQ}>{qi+1}. {q}</div>
+            <div style={styles.scaleButtons}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => { const s=[...scores]; s[qi]=n; setScores(s); }} style={{
+                  ...styles.scaleBtn,
+                  background: scores[qi]===n ? "#1a1a1a" : "transparent",
+                  color: scores[qi]===n ? "#f0ede8" : "rgba(0,0,0,0.4)",
+                  borderColor: scores[qi]===n ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+                }}>{n}</button>
+              ))}
+              <span style={styles.scaleHint}>{scores[qi] ? SCALE_LABELS[scores[qi]-1] : ""}</span>
+            </div>
+          </div>
+        ))}
+        <div style={styles.surveyLabel}>請用一句話為你的三張圖故事命名。<span style={styles.required}>必填</span></div>
+        <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="例如：一個關於消逝與重生的故事…" style={styles.textarea} />
+        <div style={styles.surveyLabel}>吸引你選擇的關鍵原因？<span style={styles.required}>必填</span></div>
+        <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="例如：第一張圖的煙霧感讓我想到…" style={styles.textarea} />
+        <div style={styles.surveyLabel}>這三張圖的氛圍？<span style={styles.required}>必填</span></div>
+        <div style={styles.moodRow}>{MOOD_OPTIONS.map(m => (
+          <button key={m} onClick={()=>setMood(m)} style={{...styles.moodBtn, background:mood===m?"#1a1a1a":"transparent", color:mood===m?"#f0ede8":"rgba(0,0,0,0.5)", borderColor:mood===m?"#1a1a1a":"rgba(0,0,0,0.2)"}}>{m}</button>
+        ))}</div>
+        <div style={styles.surveyLabel}>您的年齡層？<span style={styles.required}>必填</span></div>
+        <div style={styles.moodRow}>{AGE_OPTIONS.map(a => (
+          <button key={a} onClick={()=>setAge(a)} style={{...styles.moodBtn, background:age===a?"#1a1a1a":"transparent", color:age===a?"#f0ede8":"rgba(0,0,0,0.5)", borderColor:age===a?"#1a1a1a":"rgba(0,0,0,0.2)"}}>{a}</button>
+        ))}</div>
+        <div style={{display:"flex", justifyContent:"space-between", marginTop:24}}>
+          <button onClick={()=>setStep(3)} style={styles.backBtn}>← 上一步</button>
+          <button onClick={handleSubmit} disabled={submitting} style={styles.btn}>{submitting?"儲存中...":"送出問卷"}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const currentImages = step===1 ? allImages : step===2 ? images2 : images3;
+  const currentSel = step===1 ? sel1 : step===2 ? sel2 : sel3;
+  const setSel = step===1 ? setSel1 : step===2 ? setSel2 : setSel3;
+  const hint = step===1 ? "哪個畫面，先走進你的腦海呢？" : step===2 ? "哪個畫面，繼續走進你的腦海呢？" : "哪個畫面，為你的故事畫下句點？";
+
+  function handleNext() {
+    if (step === 1 && sel1) setStep(2);
+    else if (step === 2 && sel2) setStep(3);
+    else if (step === 3 && sel3) setStep(4);
+  }
+
+  function handleBack() {
+    if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+  }
+
+  return (
+    <div style={styles.wrapper}>
+      <TopBar />
+      {step >= 2 && (
+        <div style={styles.prevRow}>
+          <span style={styles.prevLabel}>已選：</span>
+          {step >= 2 && sel1 && <img src={sel1.src} alt="" style={styles.prevThumb} />}
+          {step >= 3 && sel2 && <img src={sel2.src} alt="" style={styles.prevThumb} />}
+        </div>
+      )}
+      <div style={styles.hint}>{hint}</div>
+      <div style={styles.grid}>
+        {currentImages.map(image => {
+          const isSelected = currentSel?.id === image.id;
+          return (
+            <div key={image.id} onClick={() => setSel(image)} style={{
+              ...styles.gridItem,
+              border: `2px solid ${isSelected ? "#1a1a1a" : "transparent"}`,
+              transform: isSelected ? "scale(1.05)" : "scale(1)",
+              boxShadow: isSelected ? "0 4px 16px rgba(0,0,0,0.15)" : "0 1px 4px rgba(0,0,0,0.08)",
+            }}>
+              <img src={image.src} alt="" style={styles.gridImg} draggable={false} />
+              {isSelected && <div style={styles.checkBadge}>✓</div>}
+            </div>
+          );
+        })}
+      </div>
+      <div style={styles.bottomBar}>
+        {step > 1 && <button onClick={handleBack} style={styles.backBtn}>← 上一步</button>}
+        {step === 1 && <span />}
+        <button onClick={handleNext} disabled={!currentSel} style={{...styles.btn, opacity: currentSel ? 1 : 0.3}}>
+          {step === 3 ? "完成，填寫問卷 →" : "下一張 →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  wrapper:{ width:"100vw", minHeight:"100dvh", background:"#f0ede8", display:"flex", flexDirection:"column", fontFamily:"'Shippori Mincho','Hiragino Mincho Pro',serif", userSelect:"none" },
+  topBar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px 10px", borderBottom:"1px solid rgba(0,0,0,0.08)", flexShrink:0, background:"#f0ede8" },
+  title:{ fontSize:12, fontWeight:600, color:"#1a1a1a", letterSpacing:"0.1em" },
+  steps:{ display:"flex", gap:6 },
+  step:{ fontSize:9, padding:"3px 10px", border:"1px solid rgba(0,0,0,0.2)", color:"rgba(0,0,0,0.35)", letterSpacing:"0.05em" },
+  stepActive:{ background:"#1a1a1a", borderColor:"#1a1a1a", color:"#f0ede8", fontWeight:500 },
+  stepDone:{ borderColor:"rgba(0,0,0,0.5)", color:"rgba(0,0,0,0.5)", background:"rgba(0,0,0,0.06)" },
+  prevRow:{ display:"flex", alignItems:"center", gap:8, padding:"8px 16px", borderBottom:"1px solid rgba(0,0,0,0.06)" },
+  prevLabel:{ fontSize:10, color:"rgba(0,0,0,0.35)" },
+  prevThumb:{ width:40, height:40, objectFit:"contain", background:"#fff", borderRadius:3, border:"1px solid rgba(0,0,0,0.1)" },
+  hint:{ fontSize:10, color:"rgba(0,0,0,0.3)", padding:"8px 16px 4px", letterSpacing:"0.08em" },
+  grid:{ flex:1, display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:8, padding:"8px 16px", overflowY:"auto" },
+  gridItem:{ position:"relative", borderRadius:4, overflow:"hidden", background:"#f5f2ee", cursor:"pointer", transition:"transform 0.3s, box-shadow 0.2s, border-color 0.2s", aspectRatio:"1" },
+  gridImg:{ width:"100%", height:"100%", objectFit:"contain", background:"#fff", display:"block" },
+  checkBadge:{ position:"absolute", top:4, right:4, width:18, height:18, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"#f0ede8", fontWeight:700 },
+  bottomBar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderTop:"1px solid rgba(0,0,0,0.08)", flexShrink:0 },
+  btn:{ fontSize:11, padding:"10px 24px", border:"1px solid #1a1a1a", background:"#1a1a1a", color:"#f0ede8", cursor:"pointer", letterSpacing:"0.1em" },
+  backBtn:{ fontSize:11, padding:"10px 16px", border:"1px solid rgba(0,0,0,0.3)", background:"transparent", color:"rgba(0,0,0,0.5)", cursor:"pointer", letterSpacing:"0.1em" },
+  center:{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, padding:24 },
+  bigText:{ fontSize:20, letterSpacing:"0.2em", color:"#1a1a1a" },
+  smallText:{ fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.1em" },
+  surveyScroll:{ flex:1, overflowY:"auto", padding:"16px 16px 40px", display:"flex", flexDirection:"column", gap:14 },
+  previewRow:{ display:"flex", gap:10, justifyContent:"center", marginBottom:8 },
+  previewThumb:{ width:80, height:80, position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 1px 6px rgba(0,0,0,0.08)" },
+  thumbBadge:{ position:"absolute", top:3, left:3, width:14, height:14, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, color:"#f0ede8", fontWeight:700 },
+  surveySectionTitle:{ fontSize:10, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em" },
+  scaleRow:{ display:"flex", flexDirection:"column", gap:6, padding:"8px 0", borderBottom:"1px solid rgba(0,0,0,0.06)" },
+  scaleQ:{ fontSize:11, color:"#1a1a1a", letterSpacing:"0.04em", lineHeight:1.6 },
+  scaleButtons:{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
+  scaleBtn:{ width:36, height:36, border:"1px solid", fontSize:12, cursor:"pointer", flexShrink:0 },
+  scaleHint:{ fontSize:10, color:"rgba(0,0,0,0.4)" },
+  surveyLabel:{ fontSize:12, color:"#1a1a1a", letterSpacing:"0.05em", lineHeight:1.6, marginTop:8 },
+  required:{ marginLeft:6, fontSize:10, color:"#c00" },
+  textarea:{ width:"100%", minHeight:60, padding:"8px 10px", border:"1px solid rgba(0,0,0,0.15)", background:"#fff", fontSize:12, fontFamily:"'Shippori Mincho',serif", resize:"vertical", boxSizing:"border-box" },
+  moodRow:{ display:"flex", flexWrap:"wrap", gap:8 },
+  moodBtn:{ fontSize:11, padding:"6px 14px", border:"1px solid", cursor:"pointer", letterSpacing:"0.05em" },
+};
