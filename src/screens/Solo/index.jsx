@@ -31,16 +31,34 @@ export default function Solo() {
   const [story, setStory] = useState("");
   const [reason, setReason] = useState("");
   const [mood, setMood] = useState("");
+  const [moodOther, setMoodOther] = useState("");
   const [age, setAge] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const images2 = allImages.filter(i => i.id !== sel1?.id);
   const images3 = allImages.filter(i => i.id !== sel1?.id && i.id !== sel2?.id);
 
+  function validate() {
+    const e = {};
+    scores.forEach((s, i) => { if (s === 0) e[`q${i}`] = true; });
+    if (!story) e.story = true;
+    if (!reason) e.reason = true;
+    if (!mood) e.mood = true;
+    if (mood === "其他" && !moodOther) e.moodOther = true;
+    if (!age) e.age = true;
+    return e;
+  }
+
   async function handleSubmit() {
-    if (!story || !reason || !mood || !age) { alert("請填寫所有必填欄位！"); return; }
-    if (scores.includes(0)) { alert("請完成所有量表題！"); return; }
+    const e = validate();
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      alert("有些題目還沒填喔！請檢查紅框處。");
+      return;
+    }
+    setErrors({});
     setSubmitting(true);
     try {
       const db = getDatabase();
@@ -51,7 +69,9 @@ export default function Solo() {
         imageB: sel2?.id || null,
         imageC: sel3?.id || null,
         q1: scores[0], q2: scores[1], q3: scores[2], q4: scores[3],
-        story, reason, mood, age,
+        story, reason,
+        mood: mood === "其他" ? `其他：${moodOther}` : mood,
+        age,
       });
       setSubmitted(true);
     } catch (err) {
@@ -101,13 +121,24 @@ export default function Solo() {
             </div>
           ))}
         </div>
+
         <div style={styles.surveySectionTitle}>請依真實感受點選 1～5</div>
         {SCALE_QUESTIONS.map((q, qi) => (
-          <div key={qi} style={styles.scaleRow}>
+          <div key={qi} style={{
+            ...styles.scaleRow,
+            border: errors[`q${qi}`] ? "1px solid #c00" : "none",
+            borderBottom: errors[`q${qi}`] ? "1px solid #c00" : "1px solid rgba(0,0,0,0.06)",
+            borderRadius: errors[`q${qi}`] ? 4 : 0,
+            padding: errors[`q${qi}`] ? "8px" : "8px 0",
+            background: errors[`q${qi}`] ? "rgba(200,0,0,0.03)" : "transparent",
+          }}>
             <div style={styles.scaleQ}>{qi+1}. {q}</div>
             <div style={styles.scaleButtons}>
               {[1,2,3,4,5].map(n => (
-                <button key={n} onClick={() => { const s=[...scores]; s[qi]=n; setScores(s); }} style={{
+                <button key={n} onClick={() => {
+                  const s=[...scores]; s[qi]=n; setScores(s);
+                  setErrors(prev => ({...prev, [`q${qi}`]: false}));
+                }} style={{
                   ...styles.scaleBtn,
                   background: scores[qi]===n ? "#1a1a1a" : "transparent",
                   color: scores[qi]===n ? "#f0ede8" : "rgba(0,0,0,0.4)",
@@ -118,18 +149,65 @@ export default function Solo() {
             </div>
           </div>
         ))}
-        <div style={styles.surveyLabel}>請用一句話為你的三張圖故事命名。<span style={styles.required}>必填</span></div>
-        <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="例如：一個關於消逝與重生的故事…" style={styles.textarea} />
-        <div style={styles.surveyLabel}>吸引你選擇的關鍵原因？<span style={styles.required}>必填</span></div>
-        <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="例如：第一張圖的煙霧感讓我想到…" style={styles.textarea} />
-        <div style={styles.surveyLabel}>這三張圖的氛圍？<span style={styles.required}>必填</span></div>
-        <div style={styles.moodRow}>{MOOD_OPTIONS.map(m => (
-          <button key={m} onClick={()=>setMood(m)} style={{...styles.moodBtn, background:mood===m?"#1a1a1a":"transparent", color:mood===m?"#f0ede8":"rgba(0,0,0,0.5)", borderColor:mood===m?"#1a1a1a":"rgba(0,0,0,0.2)"}}>{m}</button>
-        ))}</div>
-        <div style={styles.surveyLabel}>您的年齡層？<span style={styles.required}>必填</span></div>
-        <div style={styles.moodRow}>{AGE_OPTIONS.map(a => (
-          <button key={a} onClick={()=>setAge(a)} style={{...styles.moodBtn, background:age===a?"#1a1a1a":"transparent", color:age===a?"#f0ede8":"rgba(0,0,0,0.5)", borderColor:age===a?"#1a1a1a":"rgba(0,0,0,0.2)"}}>{a}</button>
-        ))}</div>
+
+        <div style={styles.surveyLabel}>請為你所選擇的三張圖所形成的故事做敘事說明。</div>
+        <div style={styles.surveyHint}>例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案</div>
+        <textarea value={story} onChange={e=>{setStory(e.target.value); setErrors(prev=>({...prev,story:false}));}}
+          placeholder="請自由書寫..." style={{
+            ...styles.textarea,
+            borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)",
+          }} />
+
+        <div style={styles.surveyLabel}>吸引你選擇某張圖的關鍵原因？</div>
+        <div style={styles.surveyHint}>例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案</div>
+        <textarea value={reason} onChange={e=>{setReason(e.target.value); setErrors(prev=>({...prev,reason:false}));}}
+          placeholder="請自由書寫..." style={{
+            ...styles.textarea,
+            borderColor: errors.reason ? "#c00" : "rgba(0,0,0,0.15)",
+          }} />
+
+        <div style={styles.surveyLabel}>因你選擇而形成的故事，氛圍你覺得偏向？</div>
+        <div style={{
+          ...styles.moodRow,
+          outline: errors.mood ? "1px solid #c00" : "none",
+          borderRadius: 4,
+          padding: errors.mood ? 6 : 0,
+        }}>
+          {MOOD_OPTIONS.map(m => (
+            <button key={m} onClick={()=>{setMood(m); setErrors(prev=>({...prev,mood:false}));}} style={{
+              ...styles.moodBtn,
+              background: mood===m ? "#1a1a1a" : "transparent",
+              color: mood===m ? "#f0ede8" : "rgba(0,0,0,0.5)",
+              borderColor: mood===m ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+            }}>{m}</button>
+          ))}
+        </div>
+        {mood === "其他" && (
+          <textarea value={moodOther} onChange={e=>{setMoodOther(e.target.value); setErrors(prev=>({...prev,moodOther:false}));}}
+            placeholder="請說明你的氛圍感受..." style={{
+              ...styles.textarea,
+              marginTop: 8,
+              borderColor: errors.moodOther ? "#c00" : "rgba(0,0,0,0.15)",
+            }} />
+        )}
+
+        <div style={styles.surveyLabel}>您的年齡層？</div>
+        <div style={{
+          ...styles.moodRow,
+          outline: errors.age ? "1px solid #c00" : "none",
+          borderRadius: 4,
+          padding: errors.age ? 6 : 0,
+        }}>
+          {AGE_OPTIONS.map(a => (
+            <button key={a} onClick={()=>{setAge(a); setErrors(prev=>({...prev,age:false}));}} style={{
+              ...styles.moodBtn,
+              background: age===a ? "#1a1a1a" : "transparent",
+              color: age===a ? "#f0ede8" : "rgba(0,0,0,0.5)",
+              borderColor: age===a ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+            }}>{a}</button>
+          ))}
+        </div>
+
         <div style={{display:"flex", justifyContent:"space-between", marginTop:24}}>
           <button onClick={()=>setStep(3)} style={styles.backBtn}>← 上一步</button>
           <button onClick={handleSubmit} disabled={submitting} style={styles.btn}>{submitting?"儲存中...":"送出問卷"}</button>
@@ -219,13 +297,13 @@ const styles = {
   previewThumb:{ width:80, height:80, position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 1px 6px rgba(0,0,0,0.08)" },
   thumbBadge:{ position:"absolute", top:3, left:3, width:14, height:14, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, color:"#f0ede8", fontWeight:700 },
   surveySectionTitle:{ fontSize:10, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em" },
-  scaleRow:{ display:"flex", flexDirection:"column", gap:6, padding:"8px 0", borderBottom:"1px solid rgba(0,0,0,0.06)" },
+  scaleRow:{ display:"flex", flexDirection:"column", gap:6, padding:"8px 0" },
   scaleQ:{ fontSize:11, color:"#1a1a1a", letterSpacing:"0.04em", lineHeight:1.6 },
   scaleButtons:{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
   scaleBtn:{ width:36, height:36, border:"1px solid", fontSize:12, cursor:"pointer", flexShrink:0 },
   scaleHint:{ fontSize:10, color:"rgba(0,0,0,0.4)" },
   surveyLabel:{ fontSize:12, color:"#1a1a1a", letterSpacing:"0.05em", lineHeight:1.6, marginTop:8 },
-  required:{ marginLeft:6, fontSize:10, color:"#c00" },
+  surveyHint:{ fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.04em", marginTop:2, marginBottom:4 },
   textarea:{ width:"100%", minHeight:60, padding:"8px 10px", border:"1px solid rgba(0,0,0,0.15)", background:"#fff", fontSize:12, fontFamily:"'Shippori Mincho',serif", resize:"vertical", boxSizing:"border-box" },
   moodRow:{ display:"flex", flexWrap:"wrap", gap:8 },
   moodBtn:{ fontSize:11, padding:"6px 14px", border:"1px solid", cursor:"pointer", letterSpacing:"0.05em" },
