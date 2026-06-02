@@ -59,8 +59,10 @@ export default function ScreenC() {
   const [story, setStory] = useState("");
   const [reason, setReason] = useState("");
   const [mood, setMood] = useState("");
+  const [moodOther, setMoodOther] = useState("");
   const [age, setAge] = useState("");
   const [surveySending, setSurveySending] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     setPositions(generatePositions());
@@ -80,25 +82,38 @@ export default function ScreenC() {
     } finally { setSending(false); }
   }
 
+  function validate() {
+    const e = {};
+    scores.forEach((s, i) => { if (s === 0) e[`q${i}`] = true; });
+    if (!story) e.story = true;
+    if (!reason) e.reason = true;
+    if (!mood) e.mood = true;
+    if (mood === "其他" && !moodOther) e.moodOther = true;
+    if (!age) e.age = true;
+    return e;
+  }
+
   async function handleSurveySubmit() {
-    if (!story || !reason || !mood || !age) {
-      alert("請填寫所有必填欄位！");
+    const e = validate();
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      alert("有些題目還沒填喔！請檢查紅框處。");
       return;
     }
-    if (scores.includes(0)) {
-      alert("請完成所有量表題！");
-      return;
-    }
+    setErrors({});
     setSurveySending(true);
     try {
       const db = getDatabase();
       await push(ref(db, "surveys"), {
         timestamp: Date.now(),
+        mode: "tablet",
         imageA: selectionA?.id || null,
         imageB: selectionB?.id || null,
         imageC: selected?.id || null,
         q1: scores[0], q2: scores[1], q3: scores[2], q4: scores[3],
-        story, reason, mood, age,
+        story, reason,
+        mood: mood === "其他" ? `其他：${moodOther}` : mood,
+        age,
       });
       setSubmitted(true);
       setTimeout(async () => {
@@ -129,7 +144,7 @@ export default function ScreenC() {
           <div style={{fontSize:22, letterSpacing:"0.2em", color:"#1a1a1a"}}>感謝你的參與</div>
           <div style={{fontSize:12, color:"rgba(0,0,0,0.4)", letterSpacing:"0.1em"}}>你的故事已被記錄</div>
           <div style={{marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10}}>
-            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories`} alt="QR Code" style={{width:160, height:160}} />
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories" alt="QR Code" style={{width:160, height:160}} />
             <div style={{fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.1em"}}>掃描查看創作者的故事版本</div>
           </div>
         </div>
@@ -152,66 +167,91 @@ export default function ScreenC() {
         <div style={styles.surveyBody}>
           <div style={{display:"flex", gap:24}}>
             <div style={{flex:1, display:"flex", flexDirection:"column", gap:20}}>
-            <div style={styles.surveySection}>
-            <div style={styles.surveySectionTitle}>請依真實感受點選 1～5</div>
-            {SCALE_QUESTIONS.map((q, qi) => (
-              <div key={qi} style={styles.scaleRow}>
-                <div style={styles.scaleQ}>{qi + 1}. {q}</div>
-                <div style={styles.scaleButtons}>
-                  {[1,2,3,4,5].map(n => (
-                    <button key={n} onClick={() => {
-                      const s = [...scores]; s[qi] = n; setScores(s);
-                    }} style={{
-                      ...styles.scaleBtn,
-                      background: scores[qi] === n ? "#1a1a1a" : "transparent",
-                      color: scores[qi] === n ? "#f0ede8" : "rgba(0,0,0,0.4)",
-                      borderColor: scores[qi] === n ? "#1a1a1a" : "rgba(0,0,0,0.2)",
-                    }}>{n}</button>
+              <div style={styles.surveySection}>
+                <div style={styles.surveySectionTitle}>請依真實感受點選 1～5</div>
+                {SCALE_QUESTIONS.map((q, qi) => (
+                  <div key={qi} style={{
+                    ...styles.scaleRow,
+                    border: errors[`q${qi}`] ? "1px solid #c00" : "none",
+                    borderBottom: errors[`q${qi}`] ? "1px solid #c00" : "1px solid rgba(0,0,0,0.06)",
+                    borderRadius: errors[`q${qi}`] ? 4 : 0,
+                    padding: errors[`q${qi}`] ? "8px" : "10px 0",
+                    background: errors[`q${qi}`] ? "rgba(200,0,0,0.03)" : "transparent",
+                  }}>
+                    <div style={styles.scaleQ}>{qi + 1}. {q}</div>
+                    <div style={styles.scaleButtons}>
+                      {[1,2,3,4,5].map(n => (
+                        <button key={n} onClick={() => {
+                          const s = [...scores]; s[qi] = n; setScores(s);
+                          setErrors(prev => ({...prev, [`q${qi}`]: false}));
+                        }} style={{
+                          ...styles.scaleBtn,
+                          background: scores[qi] === n ? "#1a1a1a" : "transparent",
+                          color: scores[qi] === n ? "#f0ede8" : "rgba(0,0,0,0.4)",
+                          borderColor: scores[qi] === n ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+                        }}>{n}</button>
+                      ))}
+                      <span style={styles.scaleHint}>{scores[qi] ? SCALE_LABELS[scores[qi]-1] : ""}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={styles.surveySection}>
+                <div style={styles.surveyLabel}>請為你所選擇的三張圖所形成的故事做敘事說明。</div>
+                <textarea value={story} onChange={e => { setStory(e.target.value); setErrors(prev=>({...prev,story:false})); }}
+                  placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
+                  style={{...styles.textarea, borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)"}} />
+              </div>
+              <div style={styles.surveySection}>
+                <div style={styles.surveyLabel}>吸引你選擇某張圖的關鍵原因？</div>
+                <textarea value={reason} onChange={e => { setReason(e.target.value); setErrors(prev=>({...prev,reason:false})); }}
+                  placeholder="例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案"
+                  style={{...styles.textarea, borderColor: errors.reason ? "#c00" : "rgba(0,0,0,0.15)"}} />
+              </div>
+              <div style={styles.surveySection}>
+                <div style={styles.surveyLabel}>因你選擇而形成的故事，氛圍你覺得偏向？</div>
+                <div style={{
+                  ...styles.moodRow,
+                  outline: errors.mood ? "1px solid #c00" : "none",
+                  borderRadius: 4,
+                  padding: errors.mood ? 6 : 0,
+                }}>
+                  {MOOD_OPTIONS.map(m => (
+                    <button key={m} onClick={() => { setMood(m); setErrors(prev=>({...prev,mood:false})); }} style={{
+                      ...styles.moodBtn,
+                      background: mood === m ? "#1a1a1a" : "transparent",
+                      color: mood === m ? "#f0ede8" : "rgba(0,0,0,0.5)",
+                      borderColor: mood === m ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+                    }}>{m}</button>
                   ))}
-                  <span style={styles.scaleHint}>{scores[qi] ? SCALE_LABELS[scores[qi]-1] : ""}</span>
+                </div>
+                {mood === "其他" && (
+                  <textarea value={moodOther} onChange={e => { setMoodOther(e.target.value); setErrors(prev=>({...prev,moodOther:false})); }}
+                    placeholder="請說明你的氛圍感受..."
+                    style={{...styles.textarea, marginTop:8, borderColor: errors.moodOther ? "#c00" : "rgba(0,0,0,0.15)"}} />
+                )}
+              </div>
+              <div style={styles.surveySection}>
+                <div style={styles.surveyLabel}>您的年齡層？</div>
+                <div style={{
+                  ...styles.moodRow,
+                  outline: errors.age ? "1px solid #c00" : "none",
+                  borderRadius: 4,
+                  padding: errors.age ? 6 : 0,
+                }}>
+                  {AGE_OPTIONS.map(a => (
+                    <button key={a} onClick={() => { setAge(a); setErrors(prev=>({...prev,age:false})); }} style={{
+                      ...styles.moodBtn,
+                      background: age === a ? "#1a1a1a" : "transparent",
+                      color: age === a ? "#f0ede8" : "rgba(0,0,0,0.5)",
+                      borderColor: age === a ? "#1a1a1a" : "rgba(0,0,0,0.2)",
+                    }}>{a}</button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-          <div style={styles.surveySection}>
-            <div style={styles.surveyLabel}>請用一句話（或一段話），為你剛才拼湊出的三張圖故事寫下劇情或命名。<span style={styles.required}>必填</span></div>
-            <textarea value={story} onChange={e => setStory(e.target.value)}
-              placeholder="例如：一個關於消逝與重生的故事…" style={styles.textarea} />
-          </div>
-          <div style={styles.surveySection}>
-            <div style={styles.surveyLabel}>這三張圖的哪一個畫面或細節，是吸引你選擇它的關鍵原因？<span style={styles.required}>必填</span></div>
-            <textarea value={reason} onChange={e => setReason(e.target.value)}
-              placeholder="例如：第一張圖的煙霧感讓我想到…" style={styles.textarea} />
-          </div>
-          <div style={styles.surveySection}>
-            <div style={styles.surveyLabel}>你覺得這三張圖說的是什麼氛圍的故事？<span style={styles.required}>必填</span></div>
-            <div style={styles.moodRow}>
-              {MOOD_OPTIONS.map(m => (
-                <button key={m} onClick={() => setMood(m)} style={{
-                  ...styles.moodBtn,
-                  background: mood === m ? "#1a1a1a" : "transparent",
-                  color: mood === m ? "#f0ede8" : "rgba(0,0,0,0.5)",
-                  borderColor: mood === m ? "#1a1a1a" : "rgba(0,0,0,0.2)",
-                }}>{m}</button>
-              ))}
-            </div>
-          </div>
-          <div style={styles.surveySection}>
-            <div style={styles.surveyLabel}>請問您的年齡層落於哪個區間？<span style={styles.required}>必填</span></div>
-            <div style={styles.moodRow}>
-              {AGE_OPTIONS.map(a => (
-                <button key={a} onClick={() => setAge(a)} style={{
-                  ...styles.moodBtn,
-                  background: age === a ? "#1a1a1a" : "transparent",
-                  color: age === a ? "#f0ede8" : "rgba(0,0,0,0.5)",
-                  borderColor: age === a ? "#1a1a1a" : "rgba(0,0,0,0.2)",
-                }}>{a}</button>
-              ))}
-            </div>
-          </div>
-          <button onClick={handleSurveySubmit} disabled={surveySending} style={styles.submitBtn}>
-            {surveySending ? "儲存中..." : "送出問卷"}
-          </button>
+              <button onClick={handleSurveySubmit} disabled={surveySending} style={styles.submitBtn}>
+                {surveySending ? "儲存中..." : "送出問卷"}
+              </button>
             </div>
             <div style={{width:200, display:"flex", flexDirection:"column", gap:8, flexShrink:0}}>
               {[{sel:selectionA,order:1},{sel:selectionB,order:2},{sel:selected,order:3}].map(({sel,order}) => (
@@ -374,8 +414,7 @@ const styles = {
   surveySection:{ display:"flex", flexDirection:"column", gap:8 },
   surveySectionTitle:{ fontSize:10, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em", marginBottom:4 },
   surveyLabel:{ fontSize:12, color:"#1a1a1a", letterSpacing:"0.05em", lineHeight:1.6 },
-  required:{ marginLeft:6, fontSize:10, color:"#c00", letterSpacing:"0.05em" },
-  scaleRow:{ display:"flex", flexDirection:"column", gap:6, padding:"10px 0", borderBottom:"1px solid rgba(0,0,0,0.06)" },
+  scaleRow:{ display:"flex", flexDirection:"column", gap:6, padding:"10px 0" },
   scaleQ:{ fontSize:11, color:"#1a1a1a", letterSpacing:"0.04em", lineHeight:1.6 },
   scaleButtons:{ display:"flex", alignItems:"center", gap:8 },
   scaleBtn:{ width:36, height:36, borderRadius:0, border:"1px solid", fontSize:12, cursor:"pointer", flexShrink:0 },

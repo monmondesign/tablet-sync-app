@@ -151,20 +151,14 @@ export default function Solo() {
         ))}
 
         <div style={styles.surveyLabel}>請為你所選擇的三張圖所形成的故事做敘事說明。</div>
-        <div style={styles.surveyHint}>例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案</div>
         <textarea value={story} onChange={e=>{setStory(e.target.value); setErrors(prev=>({...prev,story:false}));}}
-          placeholder="請自由書寫..." style={{
-            ...styles.textarea,
-            borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)",
-          }} />
+          placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
+          style={{...styles.textarea, borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)"}} />
 
         <div style={styles.surveyLabel}>吸引你選擇某張圖的關鍵原因？</div>
-        <div style={styles.surveyHint}>例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案</div>
         <textarea value={reason} onChange={e=>{setReason(e.target.value); setErrors(prev=>({...prev,reason:false}));}}
-          placeholder="請自由書寫..." style={{
-            ...styles.textarea,
-            borderColor: errors.reason ? "#c00" : "rgba(0,0,0,0.15)",
-          }} />
+          placeholder="例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案"
+          style={{...styles.textarea, borderColor: errors.reason ? "#c00" : "rgba(0,0,0,0.15)"}} />
 
         <div style={styles.surveyLabel}>因你選擇而形成的故事，氛圍你覺得偏向？</div>
         <div style={{
@@ -184,11 +178,8 @@ export default function Solo() {
         </div>
         {mood === "其他" && (
           <textarea value={moodOther} onChange={e=>{setMoodOther(e.target.value); setErrors(prev=>({...prev,moodOther:false}));}}
-            placeholder="請說明你的氛圍感受..." style={{
-              ...styles.textarea,
-              marginTop: 8,
-              borderColor: errors.moodOther ? "#c00" : "rgba(0,0,0,0.15)",
-            }} />
+            placeholder="請說明你的氛圍感受..."
+            style={{...styles.textarea, marginTop:8, borderColor: errors.moodOther ? "#c00" : "rgba(0,0,0,0.15)"}} />
         )}
 
         <div style={styles.surveyLabel}>您的年齡層？</div>
@@ -303,7 +294,6 @@ const styles = {
   scaleBtn:{ width:36, height:36, border:"1px solid", fontSize:12, cursor:"pointer", flexShrink:0 },
   scaleHint:{ fontSize:10, color:"rgba(0,0,0,0.4)" },
   surveyLabel:{ fontSize:12, color:"#1a1a1a", letterSpacing:"0.05em", lineHeight:1.6, marginTop:8 },
-  surveyHint:{ fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.04em", marginTop:2, marginBottom:4 },
   textarea:{ width:"100%", minHeight:60, padding:"8px 10px", border:"1px solid rgba(0,0,0,0.15)", background:"#fff", fontSize:12, fontFamily:"'Shippori Mincho',serif", resize:"vertical", boxSizing:"border-box" },
   moodRow:{ display:"flex", flexWrap:"wrap", gap:8 },
   moodBtn:{ fontSize:11, padding:"6px 14px", border:"1px solid", cursor:"pointer", letterSpacing:"0.05em" },
