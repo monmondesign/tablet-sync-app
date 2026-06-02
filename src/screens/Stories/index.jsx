@@ -115,17 +115,15 @@ export default function Stories() {
           {stories.map((s, i) => (
             <div key={i} style={styles.card}>
               <div style={styles.cardTitle}>{s.title}</div>
-              <div style={styles.cardInner}>
-                <div style={styles.imageCol}>
-                  {s.images.map((src, j) => (
-                    <div key={j} style={styles.imageWrap}>
-                      <div style={styles.orderBadge}>{j + 1}</div>
-                      <img src={src} alt="" style={styles.image} />
-                    </div>
-                  ))}
-                </div>
-                <div style={styles.cardContent}>{s.content}</div>
+              <div style={styles.imageRow}>
+                {s.images.map((src, j) => (
+                  <div key={j} style={styles.imageWrap}>
+                    <div style={styles.orderBadge}>{j + 1}</div>
+                    <img src={src} alt="" style={styles.image} />
+                  </div>
+                ))}
               </div>
+              <div style={styles.cardContent}>{s.content}</div>
             </div>
           ))}
         </div>
@@ -140,13 +138,12 @@ const styles = {
   header:{ padding:"32px 24px 20px", borderBottom:"1px solid rgba(0,0,0,0.08)", background:"#f0ede8" },
   headerTitle:{ fontSize:16, fontWeight:600, color:"#1a1a1a", letterSpacing:"0.2em", marginBottom:6 },
   headerSub:{ fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em", lineHeight:1.8 },
-  body:{ padding:"20px 24px 60px", display:"flex", flexDirection:"column", gap:24 },
-  card:{ background:"#fff", padding:"20px", boxShadow:"0 1px 8px rgba(0,0,0,0.06)" },
+  body:{ padding:"20px 16px 60px", display:"flex", flexDirection:"column", gap:24 },
+  card:{ background:"#fff", padding:"20px 16px", boxShadow:"0 1px 8px rgba(0,0,0,0.06)" },
   cardTitle:{ fontSize:13, fontWeight:600, color:"#1a1a1a", letterSpacing:"0.15em", marginBottom:14, paddingBottom:10, borderBottom:"1px solid rgba(0,0,0,0.06)" },
-  cardInner:{ display:"flex", flexDirection:"row", gap:16, alignItems:"flex-start" },
-  imageCol:{ display:"flex", flexDirection:"row", gap:8, flexShrink:0 },
-  imageWrap:{ width:160, height:160, position:"relative", background:"#f0ede8", overflow:"hidden" },
+  imageRow:{ display:"flex", flexDirection:"row", gap:8, marginBottom:14, justifyContent:"center" },
+  imageWrap:{ flex:1, maxWidth:160, aspectRatio:"1", position:"relative", background:"#f0ede8", overflow:"hidden" },
   orderBadge:{ position:"absolute", top:4, left:4, width:14, height:14, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, color:"#f0ede8", fontWeight:700, zIndex:1 },
   image:{ width:"100%", height:"100%", objectFit:"contain", background:"#fff", display:"block" },
-  cardContent:{ fontSize:12, color:"rgba(0,0,0,0.65)", lineHeight:2.2, letterSpacing:"0.06em", whiteSpace:"pre-wrap", flex:1, background:"rgba(0,0,0,0.02)", padding:"12px 16px" },
+  cardContent:{ fontSize:12, color:"rgba(0,0,0,0.65)", lineHeight:2.2, letterSpacing:"0.06em", whiteSpace:"pre-wrap", background:"rgba(0,0,0,0.02)", padding:"12px 16px" },
 };
