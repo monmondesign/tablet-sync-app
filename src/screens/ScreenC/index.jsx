@@ -13,23 +13,15 @@ function shuffle(array) {
 }
 
 function generatePositions() {
-  const cols = 6;
-  const rows = 4;
-  const cellW = 100 / cols;
-  const cellH = 100 / rows;
+  const cols = 6, rows = 4;
+  const cellW = 100 / cols, cellH = 100 / rows;
   const positions = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const offsetX = (Math.random() - 0.5) * cellW * 0.15;
       const offsetY = (Math.random() - 0.5) * cellH * 0.15;
       const rotate = (Math.random() - 0.5) * 6;
-      positions.push({
-        l: c * cellW + offsetX + cellW * 0.05,
-        t: r * cellH + offsetY + cellH * 0.05,
-        w: cellW * 0.86,
-        h: cellH * 0.86,
-        rotate,
-      });
+      positions.push({ l: c*cellW+offsetX+cellW*0.05, t: r*cellH+offsetY+cellH*0.05, w: cellW*0.86, h: cellH*0.86, rotate });
     }
   }
   return positions;
@@ -45,13 +37,30 @@ const SCALE_QUESTIONS = [
 const MOOD_OPTIONS = ["溫暖", "孤獨", "奇幻", "日常", "緊張", "其他"];
 const AGE_OPTIONS = ["18歲以下", "19-24歲", "25-30歲", "31-40歲", "41歲以上"];
 
+// 三張圖並排元件（說故事頁＆其他問題頁共用）
+function ThreeImages({ selectionA, selectionB, selected }) {
+  return (
+    <div style={{ display:"flex", gap:20, justifyContent:"center", alignItems:"center", marginBottom:24 }}>
+      {[{sel:selectionA,order:1},{sel:selectionB,order:2},{sel:selected,order:3}].map(({sel,order}) => (
+        <div key={order} style={{ width:"24vw", maxWidth:260, aspectRatio:"1", position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,0.08)", flexShrink:0 }}>
+          {sel && <>
+            <img src={sel.src} alt="" style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }} />
+            <div style={{ position:"absolute", top:6, left:6, width:20, height:20, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"#f0ede8", fontWeight:700 }}>{order}</div>
+          </>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ScreenC() {
   const [selectionA, setSelectionA] = useState(null);
   const [selectionB, setSelectionB] = useState(null);
   const [positions, setPositions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [showResult, setShowResult] = useState(false);
-  const [showSurvey, setShowSurvey] = useState(false);
+  const [showStory, setShowStory] = useState(false);   // 說故事頁
+  const [showSurvey, setShowSurvey] = useState(false); // 其他問題頁
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -82,10 +91,9 @@ export default function ScreenC() {
     } finally { setSending(false); }
   }
 
-  function validate() {
+  function validateSurvey() {
     const e = {};
     scores.forEach((s, i) => { if (s === 0) e[`q${i}`] = true; });
-    if (!story) e.story = true;
     if (!reason) e.reason = true;
     if (!mood) e.mood = true;
     if (mood === "其他" && !moodOther) e.moodOther = true;
@@ -94,7 +102,7 @@ export default function ScreenC() {
   }
 
   async function handleSurveySubmit() {
-    const e = validate();
+    const e = validateSurvey();
     if (Object.keys(e).length > 0) {
       setErrors(e);
       alert("有些題目還沒填喔！請檢查紅框處。");
@@ -128,45 +136,43 @@ export default function ScreenC() {
 
   const remaining = shuffle(ALL_IMAGES.filter(img => img.id !== selectionA?.id && img.id !== selectionB?.id));
 
+  const topBar = (label) => (
+    <div style={styles.topBar}>
+      <span style={styles.title}>屬於你的想像旅程</span>
+      <div style={styles.steps}>
+        {["① 第一個片段","② 第二個片段","③ 第三個片段"].map(s => (
+          <span key={s} style={{...styles.step, ...styles.stepDone}}>{s}</span>
+        ))}
+      </div>
+      <span style={{ fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em" }}>{label}</span>
+    </div>
+  );
+
+  // ── 感謝頁 ──
   if (submitted) {
     return (
       <div style={styles.resultWrapper}>
-        <div style={styles.topBar}>
-          <span style={styles.title}>屬於你的想像旅程</span>
-          <div style={styles.steps}>
-            {["① 第一個片段","② 第二個片段","③ 第三個片段"].map(s => (
-              <span key={s} style={{...styles.step, ...styles.stepDone}}>{s}</span>
-            ))}
-          </div>
-          <span style={{fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em"}}>感謝參與</span>
-        </div>
-        <div style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20}}>
-          <div style={{fontSize:22, letterSpacing:"0.2em", color:"#1a1a1a"}}>感謝你的參與</div>
-          <div style={{fontSize:12, color:"rgba(0,0,0,0.4)", letterSpacing:"0.1em"}}>你的故事已被記錄</div>
-          <div style={{marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10}}>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories" alt="QR Code" style={{width:160, height:160}} />
-            <div style={{fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.1em"}}>掃描查看創作者的故事版本</div>
+        {topBar("感謝參與")}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
+          <div style={{ fontSize:22, letterSpacing:"0.2em", color:"#1a1a1a" }}>感謝你的參與</div>
+          <div style={{ fontSize:12, color:"rgba(0,0,0,0.4)", letterSpacing:"0.1em" }}>你的故事已被記錄</div>
+          <div style={{ marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://superlative-bienenstitch-9a5f9f.netlify.app/stories" alt="QR Code" style={{ width:160, height:160 }} />
+            <div style={{ fontSize:10, color:"rgba(0,0,0,0.35)", letterSpacing:"0.1em" }}>掃描查看創作者的故事版本</div>
           </div>
         </div>
       </div>
     );
   }
 
+  // ── 其他問題頁 ──
   if (showSurvey) {
     return (
       <div style={styles.resultWrapper}>
-        <div style={styles.topBar}>
-          <span style={styles.title}>屬於你的想像旅程</span>
-          <div style={styles.steps}>
-            {["① 第一個片段","② 第二個片段","③ 第三個片段"].map(s => (
-              <span key={s} style={{...styles.step, ...styles.stepDone}}>{s}</span>
-            ))}
-          </div>
-          <span style={{fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em"}}>問卷</span>
-        </div>
+        {topBar("問卷")}
         <div style={styles.surveyBody}>
-          <div style={{display:"flex", gap:24}}>
-            <div style={{flex:1, display:"flex", flexDirection:"column", gap:20}}>
+          <div style={{ display:"flex", gap:24 }}>
+            <div style={{ flex:1, display:"flex", flexDirection:"column", gap:20 }}>
               <div style={styles.surveySection}>
                 <div style={styles.surveySectionTitle}>請依真實感受點選 1～5</div>
                 {SCALE_QUESTIONS.map((q, qi) => (
@@ -197,12 +203,6 @@ export default function ScreenC() {
                 ))}
               </div>
               <div style={styles.surveySection}>
-                <div style={styles.surveyLabel}>請為你所選擇的三張圖所形成的故事做敘事說明。</div>
-                <textarea value={story} onChange={e => { setStory(e.target.value); setErrors(prev=>({...prev,story:false})); }}
-                  placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
-                  style={{...styles.textarea, borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)"}} />
-              </div>
-              <div style={styles.surveySection}>
                 <div style={styles.surveyLabel}>吸引你選擇某張圖的關鍵原因？</div>
                 <textarea value={reason} onChange={e => { setReason(e.target.value); setErrors(prev=>({...prev,reason:false})); }}
                   placeholder="例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案"
@@ -210,12 +210,7 @@ export default function ScreenC() {
               </div>
               <div style={styles.surveySection}>
                 <div style={styles.surveyLabel}>因你選擇而形成的故事，氛圍你覺得偏向？</div>
-                <div style={{
-                  ...styles.moodRow,
-                  outline: errors.mood ? "1px solid #c00" : "none",
-                  borderRadius: 4,
-                  padding: errors.mood ? 6 : 0,
-                }}>
+                <div style={{ ...styles.moodRow, outline: errors.mood ? "1px solid #c00" : "none", borderRadius:4, padding: errors.mood ? 6 : 0 }}>
                   {MOOD_OPTIONS.map(m => (
                     <button key={m} onClick={() => { setMood(m); setErrors(prev=>({...prev,mood:false})); }} style={{
                       ...styles.moodBtn,
@@ -233,12 +228,7 @@ export default function ScreenC() {
               </div>
               <div style={styles.surveySection}>
                 <div style={styles.surveyLabel}>您的年齡層？</div>
-                <div style={{
-                  ...styles.moodRow,
-                  outline: errors.age ? "1px solid #c00" : "none",
-                  borderRadius: 4,
-                  padding: errors.age ? 6 : 0,
-                }}>
+                <div style={{ ...styles.moodRow, outline: errors.age ? "1px solid #c00" : "none", borderRadius:4, padding: errors.age ? 6 : 0 }}>
                   {AGE_OPTIONS.map(a => (
                     <button key={a} onClick={() => { setAge(a); setErrors(prev=>({...prev,age:false})); }} style={{
                       ...styles.moodBtn,
@@ -253,12 +243,13 @@ export default function ScreenC() {
                 {surveySending ? "儲存中..." : "送出問卷"}
               </button>
             </div>
-            <div style={{width:200, display:"flex", flexDirection:"column", gap:8, flexShrink:0}}>
+            {/* 右側三張圖 */}
+            <div style={{ width:160, display:"flex", flexDirection:"column", gap:8, flexShrink:0 }}>
               {[{sel:selectionA,order:1},{sel:selectionB,order:2},{sel:selected,order:3}].map(({sel,order}) => (
-                <div key={order} style={{aspectRatio:"1", position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 1px 6px rgba(0,0,0,0.08)"}}>
+                <div key={order} style={{ aspectRatio:"1", position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 1px 6px rgba(0,0,0,0.08)" }}>
                   {sel && <>
-                    <img src={sel.src} alt="" style={{width:"100%", height:"100%", objectFit:"contain", display:"block"}} />
-                    <div style={{position:"absolute", top:4, left:4, width:16, height:16, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#f0ede8", fontWeight:700}}>{order}</div>
+                    <img src={sel.src} alt="" style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }} />
+                    <div style={{ position:"absolute", top:4, left:4, width:16, height:16, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#f0ede8", fontWeight:700 }}>{order}</div>
                   </>}
                 </div>
               ))}
@@ -269,18 +260,42 @@ export default function ScreenC() {
     );
   }
 
+  // ── 說故事頁 ──
+  if (showStory) {
+    return (
+      <div style={styles.resultWrapper}>
+        {topBar("說說你的故事")}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 48px" }}>
+          <ThreeImages selectionA={selectionA} selectionB={selectionB} selected={selected} />
+          <div style={{ width:"100%", maxWidth:700 }}>
+            <div style={{ fontSize:13, color:"#1a1a1a", letterSpacing:"0.08em", marginBottom:12, textAlign:"center" }}>
+              請為你所選擇的三張圖所形成的故事做敘事說明。
+            </div>
+            <textarea
+              value={story}
+              onChange={e => setStory(e.target.value)}
+              placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
+              style={{ ...styles.textarea, width:"100%", minHeight:100, fontSize:13 }}
+            />
+            <div style={{ display:"flex", justifyContent:"flex-end", marginTop:16 }}>
+              <button
+                onClick={() => { if (story.trim()) setShowSurvey(true); else alert("請先填寫故事說明！"); }}
+                style={styles.submitBtn}
+              >
+                下一頁 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 結果頁 ──
   if (showResult) {
     return (
       <div style={styles.resultWrapper}>
-        <div style={styles.topBar}>
-          <span style={styles.title}>屬於你的想像旅程</span>
-          <div style={styles.steps}>
-            {["① 第一個片段","② 第二個片段","③ 第三個片段"].map(s => (
-              <span key={s} style={{...styles.step, ...styles.stepDone}}>{s}</span>
-            ))}
-          </div>
-          <span style={{fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em"}}>旅程完成</span>
-        </div>
+        {topBar("旅程完成")}
         <div style={styles.resultBody}>
           {[{sel:selectionA,order:1},{sel:selectionB,order:2},{sel:selected,order:3}].map(({sel,order}) => (
             <div key={order} style={styles.resultCell}>
@@ -293,12 +308,13 @@ export default function ScreenC() {
         </div>
         <div style={styles.resultFooter}>
           <span style={styles.tagline}>你所形成的故事</span>
-          <button onClick={() => setShowSurvey(true)} style={styles.surveyBtn}>填寫問卷 →</button>
+          <button onClick={() => setShowStory(true)} style={styles.surveyBtn}>填寫問卷 →</button>
         </div>
       </div>
     );
   }
 
+  // ── 選圖頁 ──
   return (
     <div style={styles.wrapper}>
       <div style={styles.topBar}>
@@ -338,26 +354,19 @@ export default function ScreenC() {
                 <div key={image.id}
                   onClick={() => { if (selectionB) setSelected(image); }}
                   style={{
-                    position: "absolute",
-                    left: `${pos.l}%`,
-                    top: `${pos.t}%`,
-                    width: `${pos.w}%`,
-                    aspectRatio: "1",
-                    height: "auto",
-                    borderRadius: 4,
-                    overflow: "hidden",
-                    border: `2px solid ${isSelected ? "#1a1a1a" : "transparent"}`,
-                    background: "#f5f2ee",
-                    display: "flex",
-                    flexDirection: "column",
-                    transform: `rotate(${isSelected ? 0 : pos.rotate}deg) scale(${isSelected ? 1.15 : 1})`,
-                    transition: "border-color 0.2s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s",
+                    position:"absolute", left:`${pos.l}%`, top:`${pos.t}%`,
+                    width:`${pos.w}%`, aspectRatio:"1", height:"auto",
+                    borderRadius:4, overflow:"hidden",
+                    border:`2px solid ${isSelected ? "#1a1a1a" : "transparent"}`,
+                    background:"#f5f2ee",
+                    transform:`rotate(${isSelected ? 0 : pos.rotate}deg) scale(${isSelected ? 1.15 : 1})`,
+                    transition:"border-color 0.2s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s",
                     cursor: !selectionB ? "default" : "pointer",
                     zIndex: isSelected ? 10 : 1,
                     pointerEvents: !selectionB ? "none" : "auto",
                     boxShadow: isSelected ? "0 4px 20px rgba(0,0,0,0.15)" : "0 1px 4px rgba(0,0,0,0.08)",
                   }}>
-                  <img src={image.src} alt="" style={{width:"100%", flex:1, objectFit:"cover", background:"#fff", display:"block"}} draggable={false} />
+                  <img src={image.src} alt="" style={{ width:"100%", flex:1, objectFit:"cover", background:"#fff", display:"block" }} draggable={false} />
                   {isSelected && <div style={styles.checkBadge}>✓</div>}
                 </div>
               );
@@ -404,7 +413,7 @@ const styles = {
   sendBtn:{ fontSize:11, padding:"8px 24px", borderRadius:0, border:"1px solid #1a1a1a", background:"#1a1a1a", color:"#f0ede8", fontWeight:400, cursor:"pointer", letterSpacing:"0.1em" },
   resultWrapper:{ width:"100vw", height:"100dvh", background:"#f0ede8", display:"flex", flexDirection:"column", overflow:"hidden", fontFamily:"'Shippori Mincho', 'Hiragino Mincho Pro', serif", userSelect:"none" },
   resultBody:{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:24, padding:"20px" },
-  resultCell:{ width:"30%", aspectRatio:"1", borderRadius:4, overflow:"hidden", position:"relative", background:"#fff", flexShrink:0, boxShadow:"0 2px 12px rgba(0,0,0,0.08)" },
+  resultCell:{ width:"28%", aspectRatio:"1", borderRadius:4, overflow:"hidden", position:"relative", background:"#fff", flexShrink:0, boxShadow:"0 2px 12px rgba(0,0,0,0.08)" },
   resultImg:{ width:"100%", height:"100%", objectFit:"contain", background:"#fff", display:"block" },
   orderBadge:{ position:"absolute", top:7, left:7, width:20, height:20, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"#f0ede8", fontWeight:700 },
   resultFooter:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 24px 20px" },
