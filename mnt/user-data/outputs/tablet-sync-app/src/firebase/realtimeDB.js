@@ -9,7 +9,7 @@ import { db } from "./config";
 
 // ---------- 平板 A 使用 ----------
 
-// 平板 A：寫入第一張選擇
+// 平板 A：寫入開始選擇
 export function setSelectionA(image) {
   return set(ref(db, "session/selectionA"), {
     id: image.id,
@@ -29,7 +29,7 @@ export function listenSelectionA(callback) {
   });
 }
 
-// 平板 B：寫入第二張選擇
+// 平板 B：寫入過程選擇
 export function setSelectionB(image) {
   return set(ref(db, "session/selectionB"), {
     id: image.id,
@@ -49,7 +49,7 @@ export function listenSelectionB(callback) {
   });
 }
 
-// 平板 C：寫入第三張選擇
+// 平板 C：寫入結束選擇
 export function setSelectionC(image) {
   return set(ref(db, "session/selectionC"), {
     id: image.id,

@@ -69,9 +69,9 @@ export default function Solo() {
     <div style={styles.topBar}>
       <span style={styles.title}>屬於你的想像旅程</span>
       <div style={styles.steps}>
-        <span style={{...styles.step, ...stepLabel(1)}}>① 第一張</span>
-        <span style={{...styles.step, ...stepLabel(2)}}>② 第二張</span>
-        <span style={{...styles.step, ...stepLabel(3)}}>③ 第三張</span>
+        <span style={{...styles.step, ...stepLabel(1)}}>① 開始</span>
+        <span style={{...styles.step, ...stepLabel(2)}}>② 過程</span>
+        <span style={{...styles.step, ...stepLabel(3)}}>③ 結束</span>
       </div>
     </div>
   );
@@ -121,7 +121,7 @@ export default function Solo() {
         <div style={styles.surveyLabel}>請用一句話為你的三張圖故事命名。<span style={styles.required}>必填</span></div>
         <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="例如：一個關於消逝與重生的故事…" style={styles.textarea} />
         <div style={styles.surveyLabel}>吸引你選擇的關鍵原因？<span style={styles.required}>必填</span></div>
-        <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="例如：第一張圖的煙霧感讓我想到…" style={styles.textarea} />
+        <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="例如：開始圖的煙霧感讓我想到…" style={styles.textarea} />
         <div style={styles.surveyLabel}>這三張圖的氛圍？<span style={styles.required}>必填</span></div>
         <div style={styles.moodRow}>{MOOD_OPTIONS.map(m => (
           <button key={m} onClick={()=>setMood(m)} style={{...styles.moodBtn, background:mood===m?"#1a1a1a":"transparent", color:mood===m?"#f0ede8":"rgba(0,0,0,0.5)", borderColor:mood===m?"#1a1a1a":"rgba(0,0,0,0.2)"}}>{m}</button>

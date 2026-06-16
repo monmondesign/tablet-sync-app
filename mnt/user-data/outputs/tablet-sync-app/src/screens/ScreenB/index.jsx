@@ -1,5 +1,5 @@
 // ============================================
-// 平板 2 — 左側顯示平板1的選擇，右側選第二張
+// 平板 2 — 左側顯示平板1的選擇，右側選過程
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -55,8 +55,8 @@ export default function ScreenB() {
         <span style={styles.title}>組圖旅程</span>
         <div style={styles.steps}>
           <span style={{ ...styles.step, ...styles.stepDone }}>① 完成</span>
-          <span style={{ ...styles.step, ...styles.stepActive }}>② 選第二張</span>
-          <span style={styles.step}>③ 選第三張</span>
+          <span style={{ ...styles.step, ...styles.stepActive }}>② 選過程</span>
+          <span style={styles.step}>③ 選結束</span>
         </div>
         <div style={styles.statusDot}>
           <span style={styles.dot} />
@@ -77,7 +77,7 @@ export default function ScreenB() {
 
         {/* 左側：平板1選的圖（固定展示） */}
         <div style={styles.leftPanel}>
-          <div style={styles.leftLabel}>你的第一張</div>
+          <div style={styles.leftLabel}>你的開始</div>
           <div style={styles.previewCard}>
             {selectionA ? (
               <>

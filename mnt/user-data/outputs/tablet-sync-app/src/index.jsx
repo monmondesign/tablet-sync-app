@@ -1,5 +1,5 @@
 // ============================================
-// 平板 1 — 21 張圖打散，觀者選第一張
+// 平板 1 — 21 張圖打散，觀者選開始
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -90,9 +90,9 @@ export default function ScreenA() {
       <div style={styles.topBar}>
         <span style={styles.title}>組圖旅程</span>
         <div style={styles.steps}>
-          <span style={{ ...styles.step, ...styles.stepActive }}>① 選第一張</span>
-          <span style={styles.step}>② 選第二張</span>
-          <span style={styles.step}>③ 選第三張</span>
+          <span style={{ ...styles.step, ...styles.stepActive }}>① 選開始</span>
+          <span style={styles.step}>② 選過程</span>
+          <span style={styles.step}>③ 選結束</span>
         </div>
         <div style={styles.statusDot}>
           <span style={styles.dot} />

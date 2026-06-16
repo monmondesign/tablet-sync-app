@@ -1,5 +1,5 @@
 // ============================================
-// 平板 3 — 顯示前兩張，選第三張，最後展示組圖
+// 平板 3 — 顯示前兩張，選結束，最後展示組圖
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -108,7 +108,7 @@ export default function ScreenC() {
         <div style={styles.steps}>
           <span style={{ ...styles.step, ...styles.stepDone }}>① 完成</span>
           <span style={{ ...styles.step, ...styles.stepDone }}>② 完成</span>
-          <span style={{ ...styles.step, ...styles.stepActive }}>③ 選第三張</span>
+          <span style={{ ...styles.step, ...styles.stepActive }}>③ 選結束</span>
         </div>
         <div style={styles.statusDot}>
           <span style={styles.dot} />

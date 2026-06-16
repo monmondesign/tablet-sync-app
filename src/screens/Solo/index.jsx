@@ -103,9 +103,9 @@ export default function Solo() {
     <div style={styles.topBar}>
       <span style={styles.title}>屬於你的想像旅程</span>
       <div style={styles.steps}>
-        <span style={{...styles.step, ...stepLabel(1)}}>① 第一張</span>
-        <span style={{...styles.step, ...stepLabel(2)}}>② 第二張</span>
-        <span style={{...styles.step, ...stepLabel(3)}}>③ 第三張</span>
+        <span style={{...styles.step, ...stepLabel(1)}}>① 開始</span>
+        <span style={{...styles.step, ...stepLabel(2)}}>② 過程</span>
+        <span style={{...styles.step, ...stepLabel(3)}}>③ 結束</span>
       </div>
     </div>
   );
