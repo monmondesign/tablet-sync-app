@@ -77,9 +77,9 @@ export default function ScreenB() {
       <div style={styles.topBar}>
         <span style={styles.title}>屬於你的想像旅程</span>
         <div style={styles.steps}>
-          <span style={{...styles.step, ...styles.stepDone}}>① 第一個片段</span>
-          <span style={{...styles.step, ...styles.stepActive}}>② 第二個片段</span>
-          <span style={styles.step}>③ 第三個片段</span>
+          <span style={{...styles.step, ...styles.stepDone}}>① 開始</span>
+          <span style={{...styles.step, ...styles.stepActive}}>② 過程</span>
+          <span style={styles.step}>③ 結束</span>
         </div>
         <div style={styles.statusArea}>
           <span style={styles.statusText}>{!selectionA ? "等待平板 1..." : sent ? "已送出" : selected ? "已選" : "收到平板 1"}</span>
@@ -88,7 +88,7 @@ export default function ScreenB() {
 
       <div style={styles.body}>
         <div style={styles.leftPanel}>
-          <div style={styles.leftLabel}>第一個片段</div>
+          <div style={styles.leftLabel}>開始</div>
           <div style={styles.previewCard}>
             {selectionA ? (
               <img src={selectionA.src} alt="" style={styles.previewImg} />

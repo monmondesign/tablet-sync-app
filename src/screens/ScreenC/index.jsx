@@ -140,7 +140,7 @@ export default function ScreenC() {
     <div style={styles.topBar}>
       <span style={styles.title}>屬於你的想像旅程</span>
       <div style={styles.steps}>
-        {["① 第一個片段","② 第二個片段","③ 第三個片段"].map(s => (
+        {["① 開始","② 過程","③ 結束"].map(s => (
           <span key={s} style={{...styles.step, ...styles.stepDone}}>{s}</span>
         ))}
       </div>
@@ -320,9 +320,9 @@ export default function ScreenC() {
       <div style={styles.topBar}>
         <span style={styles.title}>屬於你的想像旅程</span>
         <div style={styles.steps}>
-          <span style={{...styles.step, ...styles.stepDone}}>① 第一個片段</span>
-          <span style={{...styles.step, ...styles.stepDone}}>② 第二個片段</span>
-          <span style={{...styles.step, ...styles.stepActive}}>③ 第三個片段</span>
+          <span style={{...styles.step, ...styles.stepDone}}>① 開始</span>
+          <span style={{...styles.step, ...styles.stepDone}}>② 過程</span>
+          <span style={{...styles.step, ...styles.stepActive}}>③ 結束</span>
         </div>
         <div style={styles.statusArea}>
           <span style={styles.statusText}>{!selectionB ? "等待平板 2..." : selected ? "已選" : "收到平板 2"}</span>

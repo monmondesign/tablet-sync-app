@@ -84,9 +84,9 @@ export default function ScreenA() {
       <div style={styles.topBar}>
         <span style={styles.title}>屬於你的想像旅程</span>
         <div style={styles.steps}>
-          <span style={{...styles.step, ...styles.stepActive}}>① 第一個片段</span>
-          <span style={styles.step}>② 第二個片段</span>
-          <span style={styles.step}>③ 第三個片段</span>
+          <span style={{...styles.step, ...styles.stepActive}}>① 開始</span>
+          <span style={styles.step}>② 過程</span>
+          <span style={styles.step}>③ 結束</span>
         </div>
         <div style={styles.statusArea}>
           <span style={styles.statusText}>{sent ? "已送出" : selected ? "已選" : "等待選擇"}</span>
