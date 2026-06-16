@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, remove } from "firebase/database";
 
 export default function Admin() {
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(new Set());
 
   useEffect(() => {
     const db = getDatabase();
@@ -24,6 +25,30 @@ export default function Admin() {
     });
   }, []);
 
+  function toggleOne(key) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selected.size === surveys.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(surveys.map(s => s.key)));
+    }
+  }
+
+  async function deleteSelected() {
+    if (selected.size === 0) return;
+    if (!window.confirm(`確定要刪除 ${selected.size} 筆資料嗎？`)) return;
+    const db = getDatabase();
+    await Promise.all([...selected].map(key => remove(ref(db, `surveys/${key}`))));
+    setSelected(new Set());
+  }
+
   function downloadCSV() {
     const headers = ["時間", "圖A", "圖B", "圖C", "Q1", "Q2", "Q3", "Q4", "故事", "選擇原因", "氛圍", "年齡"];
     const rows = surveys.map(s => [
@@ -42,6 +67,8 @@ export default function Admin() {
     a.click();
   }
 
+  const allChecked = surveys.length > 0 && selected.size === surveys.length;
+
   return (
     <div style={styles.wrapper}>
       <div style={styles.header}>
@@ -49,9 +76,16 @@ export default function Admin() {
           <div style={styles.title}>問卷後台</div>
           <div style={styles.count}>{loading ? "載入中..." : `共 ${surveys.length} 筆資料`}</div>
         </div>
-        <button onClick={downloadCSV} disabled={surveys.length === 0} style={styles.downloadBtn}>
-          下載 Excel (CSV)
-        </button>
+        <div style={{ display:"flex", gap:12 }}>
+          {selected.size > 0 && (
+            <button onClick={deleteSelected} style={styles.deleteBtn}>
+              刪除選取（{selected.size} 筆）
+            </button>
+          )}
+          <button onClick={downloadCSV} disabled={surveys.length === 0} style={styles.downloadBtn}>
+            下載 Excel (CSV)
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -63,6 +97,9 @@ export default function Admin() {
           <table style={styles.table}>
             <thead>
               <tr>
+                <th style={styles.th}>
+                  <input type="checkbox" checked={allChecked} onChange={toggleAll} />
+                </th>
                 {["時間", "圖A", "圖B", "圖C", "Q1", "Q2", "Q3", "Q4", "故事", "選擇原因", "氛圍", "年齡"].map(h => (
                   <th key={h} style={styles.th}>{h}</th>
                 ))}
@@ -70,7 +107,10 @@ export default function Admin() {
             </thead>
             <tbody>
               {surveys.map((s, i) => (
-                <tr key={s.key} style={{background: i % 2 === 0 ? "#fff" : "#f9f7f5"}}>
+                <tr key={s.key} style={{ background: selected.has(s.key) ? "#fde8e8" : i % 2 === 0 ? "#fff" : "#f9f7f5" }}>
+                  <td style={styles.td}>
+                    <input type="checkbox" checked={selected.has(s.key)} onChange={() => toggleOne(s.key)} />
+                  </td>
                   <td style={styles.td}>{s.time}</td>
                   <td style={styles.td}>{s.imageA}</td>
                   <td style={styles.td}>{s.imageB}</td>
@@ -100,6 +140,7 @@ const styles = {
   title:{ fontSize:18, fontWeight:600, color:"#1a1a1a", letterSpacing:"0.15em" },
   count:{ fontSize:11, color:"rgba(0,0,0,0.4)", letterSpacing:"0.08em" },
   downloadBtn:{ fontSize:12, padding:"10px 24px", borderRadius:0, border:"1px solid #1a1a1a", background:"#1a1a1a", color:"#f0ede8", cursor:"pointer", letterSpacing:"0.1em" },
+  deleteBtn:{ fontSize:12, padding:"10px 24px", borderRadius:0, border:"1px solid #cc3333", background:"#cc3333", color:"#fff", cursor:"pointer", letterSpacing:"0.1em" },
   loading:{ padding:40, textAlign:"center", fontSize:13, color:"rgba(0,0,0,0.4)" },
   empty:{ padding:40, textAlign:"center", fontSize:13, color:"rgba(0,0,0,0.4)" },
   tableWrap:{ overflowX:"auto", padding:"24px 32px" },
