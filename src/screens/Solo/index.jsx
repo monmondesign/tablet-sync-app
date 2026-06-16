@@ -21,8 +21,23 @@ const SCALE_QUESTIONS = [
 const MOOD_OPTIONS = ["溫暖", "孤獨", "奇幻", "日常", "緊張", "其他"];
 const AGE_OPTIONS = ["18歲以下", "19-24歲", "25-30歲", "31-40歲", "41歲以上"];
 
+function ThreeImages({ sel1, sel2, sel3 }) {
+  return (
+    <div style={{ display:"flex", gap:20, justifyContent:"center", alignItems:"center", marginBottom:24 }}>
+      {[{sel:sel1,order:1},{sel:sel2,order:2},{sel:sel3,order:3}].map(({sel,order}) => (
+        <div key={order} style={{ width:"24vw", maxWidth:260, aspectRatio:"1", position:"relative", background:"#fff", borderRadius:4, overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,0.08)", flexShrink:0 }}>
+          {sel && <>
+            <img src={sel.src} alt="" style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }} />
+            <div style={{ position:"absolute", top:6, left:6, width:20, height:20, background:"#1a1a1a", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"#f0ede8", fontWeight:700 }}>{order}</div>
+          </>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Solo() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1,2,3=選圖 4=說故事 5=其他問題
   const [allImages] = useState(() => shuffle(ALL_IMAGES));
   const [sel1, setSel1] = useState(null);
   const [sel2, setSel2] = useState(null);
@@ -40,10 +55,9 @@ export default function Solo() {
   const images2 = allImages.filter(i => i.id !== sel1?.id);
   const images3 = allImages.filter(i => i.id !== sel1?.id && i.id !== sel2?.id);
 
-  function validate() {
+  function validateSurvey() {
     const e = {};
     scores.forEach((s, i) => { if (s === 0) e[`q${i}`] = true; });
-    if (!story) e.story = true;
     if (!reason) e.reason = true;
     if (!mood) e.mood = true;
     if (mood === "其他" && !moodOther) e.moodOther = true;
@@ -52,7 +66,7 @@ export default function Solo() {
   }
 
   async function handleSubmit() {
-    const e = validate();
+    const e = validateSurvey();
     if (Object.keys(e).length > 0) {
       setErrors(e);
       alert("有些題目還沒填喔！請檢查紅框處。");
@@ -96,6 +110,7 @@ export default function Solo() {
     </div>
   );
 
+  // ── 感謝頁 ──
   if (submitted) return (
     <div style={styles.wrapper}>
       <TopBar />
@@ -109,7 +124,8 @@ export default function Solo() {
     </div>
   );
 
-  if (step === 4) return (
+  // ── 其他問題頁（step 5）──
+  if (step === 5) return (
     <div style={styles.wrapper}>
       <TopBar />
       <div style={styles.surveyScroll}>
@@ -150,23 +166,13 @@ export default function Solo() {
           </div>
         ))}
 
-        <div style={styles.surveyLabel}>請為你所選擇的三張圖所形成的故事做敘事說明。</div>
-        <textarea value={story} onChange={e=>{setStory(e.target.value); setErrors(prev=>({...prev,story:false}));}}
-          placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
-          style={{...styles.textarea, borderColor: errors.story ? "#c00" : "rgba(0,0,0,0.15)"}} />
-
         <div style={styles.surveyLabel}>吸引你選擇某張圖的關鍵原因？</div>
         <textarea value={reason} onChange={e=>{setReason(e.target.value); setErrors(prev=>({...prev,reason:false}));}}
           placeholder="例如：圖一的煙霧感讓我想到⋯請自由發揮，無標準答案"
           style={{...styles.textarea, borderColor: errors.reason ? "#c00" : "rgba(0,0,0,0.15)"}} />
 
         <div style={styles.surveyLabel}>因你選擇而形成的故事，氛圍你覺得偏向？</div>
-        <div style={{
-          ...styles.moodRow,
-          outline: errors.mood ? "1px solid #c00" : "none",
-          borderRadius: 4,
-          padding: errors.mood ? 6 : 0,
-        }}>
+        <div style={{ ...styles.moodRow, outline: errors.mood ? "1px solid #c00" : "none", borderRadius:4, padding: errors.mood ? 6 : 0 }}>
           {MOOD_OPTIONS.map(m => (
             <button key={m} onClick={()=>{setMood(m); setErrors(prev=>({...prev,mood:false}));}} style={{
               ...styles.moodBtn,
@@ -183,12 +189,7 @@ export default function Solo() {
         )}
 
         <div style={styles.surveyLabel}>您的年齡層？</div>
-        <div style={{
-          ...styles.moodRow,
-          outline: errors.age ? "1px solid #c00" : "none",
-          borderRadius: 4,
-          padding: errors.age ? 6 : 0,
-        }}>
+        <div style={{ ...styles.moodRow, outline: errors.age ? "1px solid #c00" : "none", borderRadius:4, padding: errors.age ? 6 : 0 }}>
           {AGE_OPTIONS.map(a => (
             <button key={a} onClick={()=>{setAge(a); setErrors(prev=>({...prev,age:false}));}} style={{
               ...styles.moodBtn,
@@ -200,13 +201,44 @@ export default function Solo() {
         </div>
 
         <div style={{display:"flex", justifyContent:"space-between", marginTop:24}}>
-          <button onClick={()=>setStep(3)} style={styles.backBtn}>← 上一步</button>
+          <button onClick={()=>setStep(4)} style={styles.backBtn}>← 上一步</button>
           <button onClick={handleSubmit} disabled={submitting} style={styles.btn}>{submitting?"儲存中...":"送出問卷"}</button>
         </div>
       </div>
     </div>
   );
 
+  // ── 說故事頁（step 4）──
+  if (step === 4) return (
+    <div style={styles.wrapper}>
+      <TopBar />
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 32px" }}>
+        <ThreeImages sel1={sel1} sel2={sel2} sel3={sel3} />
+        <div style={{ width:"100%", maxWidth:700 }}>
+          <div style={{ fontSize:13, color:"#1a1a1a", letterSpacing:"0.08em", marginBottom:12, textAlign:"center" }}>
+            請為你所選擇的三張圖所形成的故事做敘事說明。
+          </div>
+          <textarea
+            value={story}
+            onChange={e => setStory(e.target.value)}
+            placeholder="例如：一個關於消逝與重生的故事⋯請自由發揮，無標準答案"
+            style={{ ...styles.textarea, width:"100%", minHeight:100, fontSize:13 }}
+          />
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:16 }}>
+            <button onClick={()=>setStep(3)} style={styles.backBtn}>← 上一步</button>
+            <button
+              onClick={() => { if (story.trim()) setStep(5); else alert("請先填寫故事說明！"); }}
+              style={styles.btn}
+            >
+              下一頁 →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── 選圖頁（step 1~3）──
   const currentImages = step===1 ? allImages : step===2 ? images2 : images3;
   const currentSel = step===1 ? sel1 : step===2 ? sel2 : sel3;
   const setSel = step===1 ? setSel1 : step===2 ? setSel2 : setSel3;
@@ -251,8 +283,7 @@ export default function Solo() {
         })}
       </div>
       <div style={styles.bottomBar}>
-        {step > 1 && <button onClick={handleBack} style={styles.backBtn}>← 上一步</button>}
-        {step === 1 && <span />}
+        {step > 1 ? <button onClick={handleBack} style={styles.backBtn}>← 上一步</button> : <span />}
         <button onClick={handleNext} disabled={!currentSel} style={{...styles.btn, opacity: currentSel ? 1 : 0.3}}>
           {step === 3 ? "完成，填寫問卷 →" : "下一張 →"}
         </button>
