@@ -1,6 +1,38 @@
 import { useEffect, useState } from "react";
 import { getDatabase, ref, onValue, remove } from "firebase/database";
 
+const IMAGE_NAME_MAP = {
+  candle: "燃盡",
+  cat_enjoy: "光鮮",
+  dog_work: "當機",
+  giraffe: "意外的禮物",
+  hedgehog_and_balloon: "刺",
+  love_or_not: "囚愛",
+  robot_and_fish: "善意的沙坑",
+};
+
+function toChineseName(imageId) {
+  if (!imageId) return "";
+  const match = imageId.match(/^(.+)_(\d+)$/);
+  if (!match) return imageId;
+  const name = IMAGE_NAME_MAP[match[1]] || match[1];
+  return `${name}_${match[2]}`;
+}
+
+function ThumbCell({ imageId }) {
+  if (!imageId) return <span style={{ color:"rgba(0,0,0,0.3)" }}>—</span>;
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+      <img
+        src={`/images/${imageId}.png`}
+        alt={imageId}
+        style={{ width:60, height:60, objectFit:"contain", background:"#fff", border:"1px solid rgba(0,0,0,0.08)", borderRadius:3 }}
+      />
+      <span style={{ fontSize:9, color:"rgba(0,0,0,0.4)", textAlign:"center", lineHeight:1.4 }}>{toChineseName(imageId)}</span>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +84,10 @@ export default function Admin() {
   function downloadCSV() {
     const headers = ["時間", "圖A", "圖B", "圖C", "Q1", "Q2", "Q3", "Q4", "故事", "選擇原因", "氛圍", "年齡"];
     const rows = surveys.map(s => [
-      s.time, s.imageA, s.imageB, s.imageC,
+      s.time,
+      toChineseName(s.imageA),
+      toChineseName(s.imageB),
+      toChineseName(s.imageC),
       s.q1, s.q2, s.q3, s.q4,
       `"${(s.story || "").replace(/"/g, '""')}"`,
       `"${(s.reason || "").replace(/"/g, '""')}"`,
@@ -112,9 +147,9 @@ export default function Admin() {
                     <input type="checkbox" checked={selected.has(s.key)} onChange={() => toggleOne(s.key)} />
                   </td>
                   <td style={styles.td}>{s.time}</td>
-                  <td style={styles.td}>{s.imageA}</td>
-                  <td style={styles.td}>{s.imageB}</td>
-                  <td style={styles.td}>{s.imageC}</td>
+                  <td style={{...styles.td, textAlign:"center"}}><ThumbCell imageId={s.imageA} /></td>
+                  <td style={{...styles.td, textAlign:"center"}}><ThumbCell imageId={s.imageB} /></td>
+                  <td style={{...styles.td, textAlign:"center"}}><ThumbCell imageId={s.imageC} /></td>
                   <td style={{...styles.td, textAlign:"center"}}>{s.q1}</td>
                   <td style={{...styles.td, textAlign:"center"}}>{s.q2}</td>
                   <td style={{...styles.td, textAlign:"center"}}>{s.q3}</td>
